@@ -43,6 +43,9 @@ fclean		:	clean
 
 re			:	fclean all
 
-.PHONY		:	all clean fclean re
+test		:
+				CC="$(CC)" python3 tests/three_probes.py
+
+.PHONY		:	all clean fclean re test
 
 -include $(DEPS)

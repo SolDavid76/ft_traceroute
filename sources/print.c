@@ -10,8 +10,8 @@ void ft_traceroute_print_help(void) {
 	printf("  --help                      Read this help and exit\n");
 }
 
-int ft_traceroute_print_header(struct addrinfo* resolved_target) {
-	struct sockaddr_in *addr = (struct sockaddr_in *)resolved_target->ai_addr;
+int ft_traceroute_print_header(const struct addrinfo* resolved_target) {
+	const struct sockaddr_in *addr = (const struct sockaddr_in *)resolved_target->ai_addr;
 	char ip[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &addr->sin_addr, ip, sizeof(ip)) == NULL) {
 		perror("ft_traceroute: inet_ntop");
@@ -22,17 +22,33 @@ int ft_traceroute_print_header(struct addrinfo* resolved_target) {
 	return (0);
 }
 
-int ft_traceroute_print_reply(int ttl, t_probe_reply reply) {
-	char ip[INET_ADDRSTRLEN];
-	if (inet_ntop(AF_INET, &reply.from, ip, sizeof(ip)) == NULL) {
-		perror("ft_traceroute: inet_ntop");
-		return (1);
+void ft_traceroute_print_hop_start(int ttl) {
+	printf("%2d", ttl);
+	fflush(stdout);
+}
+
+int ft_traceroute_print_reply(t_probe_reply reply, int print_address) {
+	if (print_address) {
+		char ip[INET_ADDRSTRLEN];
+		if (inet_ntop(AF_INET, &reply.from, ip, sizeof(ip)) == NULL) {
+			perror("ft_traceroute: inet_ntop");
+			return (1);
+		}
+
+		printf("  %s", ip);
 	}
 
-	printf("%2d  %s  %.3f ms%s\n", ttl, ip, reply.rtt, reply.reached ? " (destination)" : "");
+	printf("  %.3f ms", reply.rtt);
+	fflush(stdout);
 	return (0);
 }
 
-void ft_traceroute_print_timeout(int ttl) {
-	printf("%2d  *\n", ttl);
+void ft_traceroute_print_timeout(void) {
+	printf("  *");
+	fflush(stdout);
+}
+
+void ft_traceroute_print_hop_end(void) {
+	printf("\n");
+	fflush(stdout);
 }

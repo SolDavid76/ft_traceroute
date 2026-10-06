@@ -7,6 +7,9 @@
 #include <time.h>
 
 #define TRACEROUTE_WAIT_SECONDS 3
+#define TRACEROUTE_MAX_HOPS 30
+#define TRACEROUTE_BASE_PORT 33434
+#define TRACEROUTE_PROBES_PER_HOP 3
 
 extern volatile sig_atomic_t g_stop;
 
@@ -22,6 +25,7 @@ typedef struct s_traceroute {
 	int send_sock;
 	int ttl;
 	uint16_t source_port;
+	uint16_t probe_seq;
 	struct timespec sent_at;
 } t_traceroute;
 

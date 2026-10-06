@@ -8,12 +8,12 @@
 #include <string.h>
 #include <sys/socket.h>
 
-int receive_icmp_packet(t_traceroute *traceroute, t_probe_reply *reply) {
+int ft_traceroute_receive_icmp_packet(int sock, const struct sockaddr_in *target, uint16_t source_port, t_probe_reply *reply) {
 	unsigned char buffer[2048];
 	struct sockaddr_in from = {0};
 	socklen_t from_len = sizeof(from);
 	ssize_t received = recvfrom(
-		traceroute->recv_sock,
+		sock,
 		buffer,
 		sizeof(buffer),
 		0,
@@ -83,14 +83,13 @@ int receive_icmp_packet(t_traceroute *traceroute, t_probe_reply *reply) {
 	}
 
 	/* Match the quoted destination and ports against our probe. */
-	struct sockaddr_in *target = (struct sockaddr_in *)traceroute->target->ai_addr;
 	if (inner_ip.daddr != target->sin_addr.s_addr) {
 		return (0);
 	}
 
 	struct udphdr udp;
 	memcpy(&udp, buffer + inner_offset + inner_len, sizeof(udp));
-	if (udp.source != traceroute->source_port || udp.dest != target->sin_port) {
+	if (udp.source != source_port || udp.dest != target->sin_port) {
 		return (0);
 	}
 

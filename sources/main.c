@@ -9,7 +9,7 @@
 
 volatile sig_atomic_t g_stop = 0;
 
-void signal_handler(int signal) {
+static void signal_handler(int signal) {
 	(void)signal;
 	g_stop = 1;
 }
@@ -33,27 +33,57 @@ int ft_traceroute(t_traceroute_option option) {
 		return (1);
 	}
 
-	t_probe_reply reply = {0};
-	int ret = ft_traceroute_probe(&traceroute, &reply);
-	if (ret == -1) {
-		ft_traceroute_destroy(&traceroute);
-		return (1);
-	}
+	while (traceroute.ttl <= TRACEROUTE_MAX_HOPS && !g_stop) {
+		int probe_index = 0;
+		int reached = 0;
+		int have_previous = 0;
+		struct in_addr previous = {0};
 
-	if (!g_stop) {
-		if (ret == 0) {
-			ft_traceroute_print_timeout(traceroute.ttl);
-		} else if (ft_traceroute_print_reply(traceroute.ttl, reply)) {
-			ft_traceroute_destroy(&traceroute);
-			return (1);
+		ft_traceroute_print_hop_start(traceroute.ttl);
+		while (probe_index < TRACEROUTE_PROBES_PER_HOP && !g_stop) {
+			t_probe_reply reply = {0};
+			int ret = ft_traceroute_probe(&traceroute, &reply);
+			if (ret == -1) {
+				ft_traceroute_print_hop_end();
+				ft_traceroute_destroy(&traceroute);
+				return (1);
+			}
+
+			if (g_stop) {
+				break;
+			}
+
+			if (ret == 0) {
+				ft_traceroute_print_timeout();
+			} else {
+				int print_address = !have_previous || previous.s_addr != reply.from.s_addr;
+				if (ft_traceroute_print_reply(reply, print_address)) {
+					ft_traceroute_print_hop_end();
+					ft_traceroute_destroy(&traceroute);
+					return (1);
+				}
+
+				previous = reply.from;
+				have_previous = 1;
+				reached = reached || reply.reached;
+			}
+
+			probe_index++;
 		}
+		ft_traceroute_print_hop_end();
+
+		if (reached) {
+			break;
+		}
+
+		traceroute.ttl++;
 	}
 
 	ft_traceroute_destroy(&traceroute);
 	return (0);
 }
 
-int parse_argument(int ac, char** av, t_traceroute_option* option) {
+static int parse_argument(int ac, char** av, t_traceroute_option* option) {
 	struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
 		{NULL, 0, NULL, 0},

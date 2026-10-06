@@ -13,7 +13,7 @@ static int resolve_target(char *target, struct addrinfo **res) {
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
 
-	int ret = getaddrinfo(target, "33434", &hints, res);
+	int ret = getaddrinfo(target, NULL, &hints, res);
 	if (ret != 0) {
 		fprintf(stderr, "ft_traceroute: %s: %s\n", target, gai_strerror(ret));
 		return (1);
@@ -47,6 +47,7 @@ int ft_traceroute_init(t_traceroute *traceroute) {
 	traceroute->recv_sock = -1;
 	traceroute->send_sock = -1;
 	traceroute->ttl = 1;
+	traceroute->probe_seq = 0;
 
 	if (resolve_target(traceroute->option.target, &traceroute->target)) {
 		return (1);
@@ -59,17 +60,6 @@ int ft_traceroute_init(t_traceroute *traceroute) {
 
 	traceroute->send_sock = open_udp_socket();
 	if (traceroute->send_sock == -1) {
-		return (1);
-	}
-
-	if (setsockopt(
-			traceroute->send_sock,
-			IPPROTO_IP,
-			IP_TTL,
-			&traceroute->ttl,
-			sizeof(traceroute->ttl)
-		) == -1) {
-		perror("ft_traceroute: setsockopt IP_TTL");
 		return (1);
 	}
 
