@@ -1,0 +1,87 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "-I",
+      "includes/",
+      "-o",
+      "objs/main.o",
+      "sources/main.c"
+    ],
+    "directory": "/home/dawid/work/ft_traceroute",
+    "file": "/home/dawid/work/ft_traceroute/sources/main.c",
+    "output": "/home/dawid/work/ft_traceroute/objs/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "-I",
+      "includes/",
+      "-o",
+      "objs/print.o",
+      "sources/print.c"
+    ],
+    "directory": "/home/dawid/work/ft_traceroute",
+    "file": "/home/dawid/work/ft_traceroute/sources/print.c",
+    "output": "/home/dawid/work/ft_traceroute/objs/print.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "-I",
+      "includes/",
+      "-o",
+      "objs/probe.o",
+      "sources/probe.c"
+    ],
+    "directory": "/home/dawid/work/ft_traceroute",
+    "file": "/home/dawid/work/ft_traceroute/sources/probe.c",
+    "output": "/home/dawid/work/ft_traceroute/objs/probe.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "-I",
+      "includes/",
+      "-o",
+      "objs/receive.o",
+      "sources/receive.c"
+    ],
+    "directory": "/home/dawid/work/ft_traceroute",
+    "file": "/home/dawid/work/ft_traceroute/sources/receive.c",
+    "output": "/home/dawid/work/ft_traceroute/objs/receive.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "-I",
+      "includes/",
+      "-o",
+      "objs/init.o",
+      "sources/init.c"
+    ],
+    "directory": "/home/dawid/work/ft_traceroute",
+    "file": "/home/dawid/work/ft_traceroute/sources/init.c",
+    "output": "/home/dawid/work/ft_traceroute/objs/init.o"
+  }
+]
