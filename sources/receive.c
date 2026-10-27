@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-int ft_traceroute_receive_icmp_packet(int sock, const struct sockaddr_in *target, uint16_t source_port, t_probe_reply *reply) {
+int ft_traceroute_receive_icmp_packet(int sock, const struct sockaddr_in *target, t_probe_reply *reply) {
 	unsigned char buffer[2048];
 	struct sockaddr_in from = {0};
 	socklen_t from_len = sizeof(from);
@@ -47,12 +47,13 @@ int ft_traceroute_receive_icmp_packet(int sock, const struct sockaddr_in *target
 		return (0);
 	}
 
-	/* Accept TTL expiration or an unreachable destination port. */
+	/* Accept TTL expiration and destination unreachable messages. */
 	struct icmphdr icmp;
 	memcpy(&icmp, buffer + ip_len, sizeof(icmp));
 
 	int reached = icmp.type == ICMP_DEST_UNREACH && icmp.code == ICMP_PORT_UNREACH;
-	if (!reached && !(icmp.type == ICMP_TIME_EXCEEDED && icmp.code == ICMP_EXC_TTL)) {
+	if (icmp.type != ICMP_DEST_UNREACH
+		&& !(icmp.type == ICMP_TIME_EXCEEDED && icmp.code == ICMP_EXC_TTL)) {
 		return (0);
 	}
 
@@ -89,10 +90,6 @@ int ft_traceroute_receive_icmp_packet(int sock, const struct sockaddr_in *target
 
 	struct udphdr udp;
 	memcpy(&udp, buffer + inner_offset + inner_len, sizeof(udp));
-	if (udp.source != source_port || udp.dest != target->sin_port) {
-		return (0);
-	}
-
 	if (ntohs(udp.len) < sizeof(udp)) {
 		return (0);
 	}
@@ -102,6 +99,14 @@ int ft_traceroute_receive_icmp_packet(int sock, const struct sockaddr_in *target
 	}
 
 	reply->from = from.sin_addr;
+	reply->dest_port = udp.dest;
+	reply->source_port = udp.source;
 	reply->reached = reached;
+	reply->unreachable = icmp.type == ICMP_DEST_UNREACH && !reached;
+	reply->icmp_code = icmp.code;
+	reply->next_hop_mtu = 0;
+	if (reply->unreachable && icmp.code == ICMP_FRAG_NEEDED) {
+		reply->next_hop_mtu = ntohs(icmp.un.frag.mtu);
+	}
 	return (1);
 }

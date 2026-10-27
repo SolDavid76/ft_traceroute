@@ -2,5 +2,7 @@
 
 #include "ft_traceroute.h"
 
-/* Returns 1 for a reply, 0 for a timeout or stop, -1 for an error. */
-int ft_traceroute_probe(t_traceroute *traceroute, t_probe_reply *reply);
+/* Fill the available slots, keeping at most TRACEROUTE_SIM_PROBES pending. */
+int ft_traceroute_send_probes(t_traceroute *traceroute, size_t *sent_count);
+/* Receive one response or expire probes; returns -1 on error, 0 otherwise. */
+int ft_traceroute_wait_reply(t_traceroute *traceroute, size_t sent_count);

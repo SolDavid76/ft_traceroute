@@ -28,59 +28,72 @@ int ft_traceroute(t_traceroute_option option) {
 		return (1);
 	}
 
-	if (ft_traceroute_print_header(traceroute.target)) {
+	if (ft_traceroute_print_header(traceroute.option.target, traceroute.target)) {
 		ft_traceroute_destroy(&traceroute);
 		return (1);
 	}
 
-	while (traceroute.ttl <= TRACEROUTE_MAX_HOPS && !g_stop) {
-		int probe_index = 0;
-		int reached = 0;
-		int have_previous = 0;
-		struct in_addr previous = {0};
+	size_t sent_count = 0;
+	size_t printed_count = 0;
+	int status = 0;
+	int line_open = 1;
+	int have_previous = 0;
+	struct in_addr previous = {0};
 
-		ft_traceroute_print_hop_start(traceroute.ttl);
-		while (probe_index < TRACEROUTE_PROBES_PER_HOP && !g_stop) {
-			t_probe_reply reply = {0};
-			int ret = ft_traceroute_probe(&traceroute, &reply);
-			if (ret == -1) {
-				ft_traceroute_print_hop_end();
-				ft_traceroute_destroy(&traceroute);
-				return (1);
-			}
-
-			if (g_stop) {
-				break;
-			}
-
-			if (ret == 0) {
-				ft_traceroute_print_timeout();
-			} else {
-				int print_address = !have_previous || previous.s_addr != reply.from.s_addr;
-				if (ft_traceroute_print_reply(reply, print_address)) {
-					ft_traceroute_print_hop_end();
-					ft_traceroute_destroy(&traceroute);
-					return (1);
-				}
-
-				previous = reply.from;
-				have_previous = 1;
-				reached = reached || reply.reached;
-			}
-
-			probe_index++;
-		}
-		ft_traceroute_print_hop_end();
-
-		if (reached) {
+	ft_traceroute_print_hop_start(1);
+	while (printed_count < traceroute.probe_limit && !g_stop) {
+		if (ft_traceroute_send_probes(&traceroute, &sent_count) == -1) {
+			status = 1;
 			break;
 		}
 
-		traceroute.ttl++;
+		while (printed_count < sent_count && printed_count < traceroute.probe_limit && !g_stop) {
+			const t_probe *probe = &traceroute.probes[printed_count];
+			if (probe->state != PROBE_REPLIED && probe->state != PROBE_TIMEOUT) {
+				break;
+			}
+
+			if (!line_open) {
+				ft_traceroute_print_hop_start(printed_count / TRACEROUTE_PROBES_PER_HOP + 1);
+				line_open = 1;
+				have_previous = 0;
+			}
+
+			if (probe->state == PROBE_TIMEOUT) {
+				ft_traceroute_print_timeout();
+			} else {
+				int print_address = !have_previous || previous.s_addr != probe->reply.from.s_addr;
+				if (ft_traceroute_print_reply(probe->reply, print_address)) {
+					status = 1;
+					break;
+				}
+
+				previous = probe->reply.from;
+				have_previous = 1;
+			}
+
+			printed_count++;
+			if (printed_count % TRACEROUTE_PROBES_PER_HOP == 0) {
+				ft_traceroute_print_hop_end();
+				line_open = 0;
+			}
+		}
+
+		if (status || g_stop || printed_count == traceroute.probe_limit) {
+			break;
+		}
+
+		if (ft_traceroute_wait_reply(&traceroute, sent_count) == -1) {
+			status = 1;
+			break;
+		}
 	}
 
+	if (line_open) {
+		ft_traceroute_print_hop_end();
+	}
 	ft_traceroute_destroy(&traceroute);
-	return (0);
+	return (status);
 }
 
 static int parse_argument(int ac, char** av, t_traceroute_option* option) {

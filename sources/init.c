@@ -32,22 +32,13 @@ static int open_icmp_socket(void) {
 	return (sock);
 }
 
-static int open_udp_socket(void) {
-	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sock == -1) {
-		perror("ft_traceroute: socket UDP");
-		return (-1);
-	}
-
-	return (sock);
-}
-
 int ft_traceroute_init(t_traceroute *traceroute) {
 	traceroute->target = NULL;
 	traceroute->recv_sock = -1;
-	traceroute->send_sock = -1;
-	traceroute->ttl = 1;
-	traceroute->probe_seq = 0;
+	traceroute->probe_limit = TRACEROUTE_MAX_PROBES;
+	for (size_t i = 0; i < TRACEROUTE_MAX_PROBES; i++) {
+		traceroute->probes[i].send_sock = -1;
+	}
 
 	if (resolve_target(traceroute->option.target, &traceroute->target)) {
 		return (1);
@@ -55,11 +46,6 @@ int ft_traceroute_init(t_traceroute *traceroute) {
 
 	traceroute->recv_sock = open_icmp_socket();
 	if (traceroute->recv_sock == -1) {
-		return (1);
-	}
-
-	traceroute->send_sock = open_udp_socket();
-	if (traceroute->send_sock == -1) {
 		return (1);
 	}
 
@@ -75,8 +61,10 @@ void ft_traceroute_destroy(t_traceroute *traceroute) {
 		close(traceroute->recv_sock);
 		traceroute->recv_sock = -1;
 	}
-	if (traceroute->send_sock != -1) {
-		close(traceroute->send_sock);
-		traceroute->send_sock = -1;
+	for (size_t i = 0; i < TRACEROUTE_MAX_PROBES; i++) {
+		if (traceroute->probes[i].send_sock != -1) {
+			close(traceroute->probes[i].send_sock);
+			traceroute->probes[i].send_sock = -1;
+		}
 	}
 }
